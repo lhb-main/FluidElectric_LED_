@@ -198,33 +198,62 @@ void simulateBreak() {
     }
 }
 
+// 模拟短路效果
 void simulateShortCircuit() {
-    // 更新灯带1
-    for (int i = 0; i < strip1.numPixels(); i++) {
-        if (i >= 35 && i <= 46) {
-            strip1.setPixelColor(i, strip1.Color(0, 0, 0)); // 关闭第35到46号灯珠
-        } else {
-            strip1.setPixelColor(i, strip1.Color(255, 0, 0)); // 其余设置为红色
-        }
+  static int step = 0;
+  static int state = 1;
+
+  strip1.clear();
+  strip2.clear();
+  strip3.fill(strip3.Color(255, 0, 0));
+
+  if (state == 1) {
+    for (int j = 0; j < SEGMENT; j++) {
+      int ledIndex = step - j;
+      if (ledIndex >= 0 && ledIndex < 35) {
+        uint8_t brightness = 255 - (j * 255 / SEGMENT);
+        strip1.setPixelColor(ledIndex, strip1.Color(0, brightness, 0));
+      }
     }
-
-    // 更新灯带2
-    for (int i = 0; i < strip2.numPixels(); i++) {
-        strip2.setPixelColor(i, strip2.Color(255, 0, 0)); // 全部设置为红色
+    if (step >= 35) {
+      step = 0;
+      state = 2;
     }
-
-    // 更新灯带3
-    for (int i = 0; i < strip3.numPixels(); i++) {
-        strip3.setPixelColor(i, strip3.Color(0, 0, 0)); // 关闭所有灯珠
+  } else if (state == 2) {
+    for (int j = 0; j < SEGMENT; j++) {
+      int ledIndex = step - j;
+      if (ledIndex >= 0 && ledIndex < NUM_LEDS2) {
+        uint8_t brightness = 255 - (j * 255 / SEGMENT);
+        strip2.setPixelColor(ledIndex, strip2.Color(0, brightness, 0));
+      }
     }
+    if (step >= NUM_LEDS2) {
+      step = 46;
+      state = 3;
+    }
+  } else if (state == 3) {
+    for (int j = 0; j < SEGMENT; j++) {
+      int ledIndex = step - j;
+      if (ledIndex >= 46 && ledIndex < NUM_LEDS1) {
+        uint8_t brightness = 255 - (j * 255 / SEGMENT);
+        strip1.setPixelColor(ledIndex, strip1.Color(0, brightness, 0));
+      }
+    }
+    for (int i = 35; i < 46; i++) {
+      strip1.setPixelColor(i, strip1.Color(255, 0, 0));
+    }
+    if (step >= NUM_LEDS1) {
+      step = 0;
+      state = 1;
+    }
+  }
 
-    // 更新显示
-    strip1.show();
-    strip2.show();
-    strip3.show();
+  strip1.show();
+  strip2.show();
+  strip3.show();
 
-    // 延迟一段时间，模拟短路效果
-    vTaskDelay(pdMS_TO_TICKS(speed3)); // speed3 是延迟时间，可调
+  step++;
+  vTaskDelay(pdMS_TO_TICKS(speed3)); // speed3 是延迟时间，可调
 }
 
 
